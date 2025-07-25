@@ -1,11 +1,15 @@
 from crewai import Agent, Task, Crew, LLM
+import os
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
 
 def run_mcq_pipeline(text: str):
     # Gemini model setup with response as JSON
     llm = LLM(
         model="gemini/gemini-2.0-flash",
         temperature=0.7,
-        api_key="AIzaSyAfXVscNIrGY59iklANhJSJbIzFdAgDhbE"
+        api_key=GEMINI_API_KEY
     )
 
     # Agent 1: Generates Arabic MCQs
