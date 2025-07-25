@@ -5,6 +5,7 @@ def run_mcq_pipeline(text: str):
     llm = LLM(
         model="gemini/gemini-2.0-flash",
         temperature=0.7,
+        api_key="AIzaSyAfXVscNIrGY59iklANhJSJbIzFdAgDhbE"
     )
 
     # Agent 1: Generates Arabic MCQs
