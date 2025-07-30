@@ -1,18 +1,17 @@
 from crewai import Agent, Task, Crew, LLM
 import os
+from .models import GeneratedMCQOutput, ValidatedMCQOutput, FinalMCQOutput
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-
 def run_mcq_pipeline(text: str):
-    # Gemini model setup with response as JSON
     llm = LLM(
         model="gemini/gemini-2.0-flash",
         temperature=0.7,
         api_key=GEMINI_API_KEY
     )
 
-    # Agent 1: Generates Arabic MCQs
+    #first agent is the generator
     mcq_generator = Agent(
         role="Arabic MCQ Generator",
         goal="Generate valid Arabic MCQs from provided text in JSON format",
@@ -21,7 +20,7 @@ def run_mcq_pipeline(text: str):
         verbose=True
     )
 
-    # Agent 2: Arabic Question Validator
+    #second agent is the validator
     question_validator = Agent(
         role="Arabic Question Validator",
         goal="Check the correctness and quality of Arabic multiple-choice questions.",
@@ -30,7 +29,7 @@ def run_mcq_pipeline(text: str):
         verbose=True
     )
 
-    # Agent 3: Difficulty Level Assigner
+    #third agent show the difficulty of the question
     difficulty_assessor = Agent(
         role="Arabic Question Difficulty Assessor",
         goal="Determine the difficulty level of each question as 'easy', 'normal', or 'hard'.",
@@ -39,7 +38,7 @@ def run_mcq_pipeline(text: str):
         verbose=True
     )
 
-    # Task 1: Generate MCQs
+    #first task is MCQs generating
     generate_task = Task(
         description=(
             "Generate Arabic MCQs from the input: {text}.\n"
@@ -47,10 +46,11 @@ def run_mcq_pipeline(text: str):
             "which is a list of objects, each containing 'question', 'answers', and 'correct_answer'."
         ),
         expected_output="A JSON object with 'questions' as a list of question objects, each containing 'question', 'answers', and 'correct_answer'.",
+        output_json=GeneratedMCQOutput,
         agent=mcq_generator,
     )
 
-    # Task 2: Validate the MCQs generated
+    # second task is MCQs validating
     validate_task = Task(
         description=(
             "You will receive a JSON list of Arabic MCQs from the generate_task.\n\n"
@@ -63,10 +63,11 @@ def run_mcq_pipeline(text: str):
         ),
         context=[generate_task],
         expected_output="Same JSON structure with added 'is_valid' (boolean) and optional 'feedback' (Arabic string) per question.",
+        output_json=ValidatedMCQOutput,
         agent=question_validator
     )
 
-    # Task 3: Assign difficulty levels
+    #third task is for difficulty
     difficulty_task = Task(
         description=(
             "You will receive the validated Arabic MCQs from validate_task and the original text.\n\n"
@@ -77,18 +78,20 @@ def run_mcq_pipeline(text: str):
         ),
         context=[validate_task],
         expected_output="Same JSON structure with a new 'difficulty' field for each question.",
+        output_json=FinalMCQOutput,
         agent=difficulty_assessor
     )
 
 
-    # Define the crew with all three tasks
+    #crew is to compine all the agents and the tasks verspose is for printing
     crew = Crew(
         agents=[mcq_generator, question_validator, difficulty_assessor],
         tasks=[generate_task, validate_task, difficulty_task],
         verbose=True
     )
 
-    # Run the process
+    #kick off is to start
     result = crew.kickoff({"text": text})
+    result_dict = result.model_dump()
     print(result)
-    return result
+    return result_dict

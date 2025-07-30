@@ -1,3 +1,29 @@
 from django.db import models
+from django.conf import settings # To get the AUTH_USER_MODEL
 
-# Create your models here.
+class MCQRequest(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, # Links to your custom User model
+        on_delete=models.CASCADE,
+        related_name='mcq_requests',
+        help_text="The user who generated this MCQ set."
+    )
+    input_text = models.TextField(
+        help_text="The original text provided by the user for MCQ generation."
+    )
+    generated_mcqs = models.JSONField(
+        help_text="The JSON output containing the generated MCQs."
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True, # Automatically sets the timestamp when the object is first created
+        help_text="Timestamp of when the MCQ request was made."
+    )
+
+    class Meta:
+        # Orders results by most recent first when querying
+        ordering = ['-created_at']
+        verbose_name = "MCQ Request"
+        verbose_name_plural = "MCQ Requests"
+
+    def __str__(self):
+        return f"Request by {self.user.username} on {self.created_at.strftime('%Y-%m-%d %H:%M')}"

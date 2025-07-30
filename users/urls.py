@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import GenerateMCQs, UserMCQRequestsView
+from core.views import GenerateMCQs, UserMCQRequestsView
 
 urlpatterns = [
     path('generate-mcqs/', GenerateMCQs.as_view(), name='generate-mcqs'),
