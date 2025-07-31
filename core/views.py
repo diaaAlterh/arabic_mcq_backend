@@ -34,11 +34,13 @@ class GenerateMCQs(APIView):
             )
 
             # 3. Return the generated MCQs to the user
-            return Response(result, status=status.HTTP_200_OK)
+            serializer = MCQRequestSerializer(mcq_request, many=True) # many=True because we're serializing a list
+        
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
             # Log the full traceback for debugging purposes
-            logger.exception(f"Error during MCQ generation or saving for user {request.user.username}:")
+            logger.exception("Error occurred while generating MCQs")  # This logs full traceback
             return Response({"error": "An internal server error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserMCQRequestsView(APIView):
