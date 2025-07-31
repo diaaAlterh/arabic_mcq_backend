@@ -1,7 +1,16 @@
 from django.urls import path
-from core.views import GenerateMCQs, UserMCQRequestsView
+
+from .views import RegisterView, LoginView
+
+from rest_framework_simplejwt.views import (
+    TokenRefreshView,
+    # TokenObtainPairView, # Only uncomment if you decide to use simplejwt's default login view
+)
+
 
 urlpatterns = [
-    path('generate-mcqs/', GenerateMCQs.as_view(), name='generate-mcqs'),
-    path('my-mcq-requests/', UserMCQRequestsView.as_view(), name='my-mcq-requests'), # New URL for retrieving requests
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', LoginView.as_view(), name='login'), # Your custom login view
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
 ]
