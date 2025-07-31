@@ -34,9 +34,8 @@ class GenerateMCQs(APIView):
             )
 
             # 3. Return the generated MCQs to the user
-            serializer = MCQRequestSerializer(mcq_request, many=True) # many=True because we're serializing a list
-        
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+            return Response(result, status=status.HTTP_200_OK)
 
         except Exception as e:
             # Log the full traceback for debugging purposes
