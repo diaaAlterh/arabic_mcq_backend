@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings # To get the AUTH_USER_MODEL
+import uuid
+
 
 class MCQRequest(models.Model):
     user = models.ForeignKey(
@@ -27,3 +29,22 @@ class MCQRequest(models.Model):
 
     def __str__(self):
         return f"Request by {self.user.username} on {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+    
+class Task(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("processing", "Processing"),
+        ("completed", "Completed"),
+        ("failed", "Failed"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    progress = models.IntegerField(default=0)
+    result = models.JSONField(null=True, blank=True)
+    error = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Task {self.id} - {self.status}"
