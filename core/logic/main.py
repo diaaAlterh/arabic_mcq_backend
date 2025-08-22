@@ -15,7 +15,8 @@ import re
 import PyPDF2
 import fitz
 
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"  # path
+# pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"  # path
+pytesseract.pytesseract.tesseract_cmd = r"/usr/bin/tesseract"  # path
 
 class ArabicMCQGeneratorSystem:
     def __init__(self):
