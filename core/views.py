@@ -122,6 +122,82 @@ class GenerateMCQs(APIView):
                 # Log the full traceback for debugging purposes
                 logger.exception("Error occurred while generating MCQs")  # This logs full traceback
                 return Response({"error": "An internal server error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+class Extract(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+        text = request.data.get("text")
+
+        if not file and not text:
+            return Response(
+                {"error": "You must provide either an image, a PDF, or text"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ممنوع يجي أكتر من وحدة بنفس الوقت
+        if file and text:
+            return Response(
+                {"error": "Provide only one of: image, PDF, or text"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # معالجة الملف
+        if file:
+            allowed_image_types = [
+                "image/jpeg", "image/png", "image/gif",
+                "image/bmp", "image/tiff", "image/webp"
+            ]
+            pdf_type = "application/pdf"
+            file_path = UPLOAD_DIR / f"{uuid.uuid4()}_{file.name}"
+            with open(file_path, "wb+") as dest:
+                for chunk in file.chunks():
+                    dest.write(chunk)
+
+            if file.content_type in allowed_image_types:
+                        
+                print("🔍 جاري استخراج النص من الصورة...")
+                confidence = generator.get_text_confidence(str(file_path))
+                print(f"مستوى ثقة OCR: {confidence['average_confidence']:.1f}%")
+                
+                extracted_text = generator.extract_text_from_image(str(file_path))
+                if extracted_text.startswith("خطأ"):
+                    return Response({'error': extracted_text, 'confidence': confidence},status=400)
+
+                    
+                print(f"تم استخراج النص بنجاح ({len(extracted_text)} حرف)")
+                final_text = extracted_text
+                
+
+            elif file.content_type == pdf_type:
+                        
+                print("📄 جاري استخراج النص من PDF...")
+                extracted_text = generator.extract_text_from_pdf(str(file_path))
+                
+                if extracted_text.startswith("خطأ"):
+                    return Response({'error': extracted_text},status=400)
+                    
+                print(f"تم استخراج النص بنجاح ({len(extracted_text)} حرف)")
+                final_text = extracted_text
+
+
+            else:
+                return Response({"detail": "Unsupported file type"}, status=400)
+
+        # معالجة النص
+        if text:
+            final_text=text
+            
+        if final_text:
+            try:
+                return Response({"extracted text":final_text}, status=status.HTTP_200_OK)
+
+            except Exception as e:
+                # Log the full traceback for debugging purposes
+                logger.exception("Error occurred while Extracting Text")  # This logs full traceback
+                return Response({"error": "An internal server error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserMCQRequestsView(APIView):
     authentication_classes = [JWTAuthentication]

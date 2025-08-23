@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import GenerateMCQs, UserMCQRequestsView
+from .views import GenerateMCQs, UserMCQRequestsView, Extract
 from .views import (
     GenerateFromTextView, GenerateFromImageView, GenerateFromPDFView,
     TaskStatusView, DownloadWordView, DownloadJSONView, DeleteTaskView,
@@ -8,6 +8,7 @@ from .views import (
 
 urlpatterns = [
     path('generate-mcqs/', GenerateMCQs.as_view(), name='generate-mcqs'),
+    path('extract/', Extract.as_view(), name='extract'),
     path('my-mcq-requests/', UserMCQRequestsView.as_view(), name='my-mcq-requests'), # New URL for retrieving requests
     path("generate/text/", GenerateFromTextView.as_view(), name="generate_text"),
     path("generate/image/", GenerateFromImageView.as_view(), name="generate_image"),
