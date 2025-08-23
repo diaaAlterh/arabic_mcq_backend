@@ -25,7 +25,7 @@ class ArabicMCQGeneratorSystem:
             api_key=os.getenv("GEMINI_API_KEY"),
             temperature=0.7
         )
-        self.ocr_config = '--oem 3 --psm 6 -l ara+eng'
+        self.ocr_config = '--oem 3 --psm 6'
         self.setup_agents()
 
     def setup_agents(self):
@@ -81,12 +81,21 @@ class ArabicMCQGeneratorSystem:
 
     def extract_text_from_image(self, path: str) -> str:
         try:
+            print('1 preprocess_image_for_ocr')
             im = self.preprocess_image_for_ocr(path)
+            print('2 Image.fromarray')
             pil_img = Image.fromarray(im)
+            print('3 ImageEnhance.Contrast')
             pil_img = ImageEnhance.Contrast(pil_img).enhance(1.5)
+            print('4 pil_img.filter')
             pil_img = pil_img.filter(ImageFilter.MedianFilter(size=3))
-            txt = pytesseract.image_to_string(pil_img, config='--oem 1 --psm 3', lang='ara+eng')
+            print('5 image_to_string')
+            txt = pytesseract.image_to_string(pil_img, config=self.ocr_config, lang='ara+eng')
+            print('6 clean_extracted_text')
+            print(txt)
             cleaned = self.clean_extracted_text(txt)
+            print('7 result')
+            print(cleaned)
             if not cleaned.strip():
                 txt = pytesseract.image_to_string(
                     pil_img, config='--oem 1 --psm 3', lang='ara+eng'
