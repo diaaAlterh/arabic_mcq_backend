@@ -16,7 +16,7 @@ mcq_generator = Agent(
     goal="Generate valid Arabic MCQs from provided text in JSON format",
     backstory="Expert in Arabic language and curriculum-based educational content.",
     llm=llm,
-    verbose=True
+    verbose=False
 )
 
 #second agent is the validator
@@ -93,5 +93,4 @@ def run_mcq_pipeline(text: str):
     #kick off is to start
     result = crew.kickoff({"text": text})
     result_dict = result.model_dump()
-    print(result)
     return result_dict
