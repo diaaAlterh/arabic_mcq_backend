@@ -85,11 +85,11 @@ class ArabicMCQGeneratorSystem:
             pil_img = Image.fromarray(im)
             pil_img = ImageEnhance.Contrast(pil_img).enhance(1.5)
             pil_img = pil_img.filter(ImageFilter.MedianFilter(size=3))
-            txt = pytesseract.image_to_string(pil_img, config=self.ocr_config, lang='ara+eng')
+            txt = pytesseract.image_to_string(pil_img, config='--oem 1 --psm 3', lang='ara+eng')
             cleaned = self.clean_extracted_text(txt)
             if not cleaned.strip():
                 txt = pytesseract.image_to_string(
-                    pil_img, config='--oem 1 --psm 3 -l ara+eng', lang='ara+eng'
+                    pil_img, config='--oem 1 --psm 3', lang='ara+eng'
                 )
                 cleaned = self.clean_extracted_text(txt)
             return cleaned or "لم يتم العثور على نص في الصورة"
