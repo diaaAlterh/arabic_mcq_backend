@@ -67,17 +67,13 @@ class GenerateMCQs(APIView):
                 for chunk in file.chunks():
                     dest.write(chunk)
 
-
-
-
-
             if file.content_type in allowed_image_types:
                         
                 print("🔍 جاري استخراج النص من الصورة...")
-                confidence = generator.get_text_confidence(file_path)
+                confidence = generator.get_text_confidence(str(file_path))
                 print(f"مستوى ثقة OCR: {confidence['average_confidence']:.1f}%")
                 
-                extracted_text = generator.extract_text_from_image(file_path)
+                extracted_text = generator.extract_text_from_image(str(file_path))
                 if extracted_text.startswith("خطأ"):
                     return Response({'error': extracted_text, 'confidence': confidence},status=400)
 
@@ -89,7 +85,7 @@ class GenerateMCQs(APIView):
             elif file.content_type == pdf_type:
                         
                 print("📄 جاري استخراج النص من PDF...")
-                extracted_text = generator.extract_text_from_pdf(file_path)
+                extracted_text = generator.extract_text_from_pdf(str(file_path))
                 
                 if extracted_text.startswith("خطأ"):
                     return Response({'error': extracted_text},status=400)
