@@ -173,18 +173,18 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'INFO',
+        'level': 'DEBUG',   # 🔥 show everything (DEBUG, INFO, WARNING, ERROR)
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
-            'propagate': False,
+            'level': 'DEBUG',   # 🔥 same as runserver
+            'propagate': True,
         },
-        'core': { # Your app's logger
+        'core': {  # your app logger
             'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
+            'level': 'DEBUG',
+            'propagate': True,
         },
     },
 }
