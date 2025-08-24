@@ -24,6 +24,8 @@ from .serializers import TextInputSerializer, TaskSerializer
 # Import your MCQ generator
 from core.logic.main import ArabicMCQGeneratorSystem
 import uuid
+import mimetypes
+
 
 
 logger = logging.getLogger(__name__) # Initialize logger
@@ -33,6 +35,7 @@ UPLOAD_DIR = Path("uploads")
 OUTPUT_DIR = Path("outputs")
 UPLOAD_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
+
 
 class GenerateMCQs(APIView):
     authentication_classes = [JWTAuthentication]
@@ -48,80 +51,68 @@ class GenerateMCQs(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # ممنوع يجي أكتر من وحدة بنفس الوقت
         if file and text:
             return Response(
                 {"error": "Provide only one of: image, PDF, or text"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # معالجة الملف
+        final_text = None
+
         if file:
-            allowed_image_types = [
-                "image/jpeg", "image/png", "image/gif",
-                "image/bmp", "image/tiff", "image/webp"
-            ]
-            pdf_type = "application/pdf"
             file_path = UPLOAD_DIR / f"{uuid.uuid4()}_{file.name}"
             with open(file_path, "wb+") as dest:
                 for chunk in file.chunks():
                     dest.write(chunk)
 
-            if file.content_type in allowed_image_types:
-                        
-                print("🔍 جاري استخراج النص من الصورة...")
-                # confidence = generator.get_text_confidence(str(file_path))
-                # print(f"مستوى ثقة OCR: {confidence['average_confidence']:.1f}%")
-                
+            # Detect MIME type and fallback to extension check
+            mime_type, _ = mimetypes.guess_type(file_path)
+            ext = file_path.suffix.lower()
+
+            allowed_image_exts = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"]
+            pdf_ext = ".pdf"
+
+            if (mime_type and mime_type.startswith("image")) or ext in allowed_image_exts:
+                print("🔍 Extracting text from image...")
                 extracted_text = generator.extract_text_from_image(str(file_path))
                 if extracted_text.startswith("خطأ"):
-                    return Response({'error': extracted_text},status=400)
-
-                    
-                print(f"تم استخراج النص بنجاح ({len(extracted_text)} حرف)")
+                    return Response({'error': extracted_text}, status=400)
+                print(f"✅ Text extracted successfully ({len(extracted_text)} chars)")
                 final_text = extracted_text
-                
 
-            elif file.content_type == pdf_type:
-                        
-                print("📄 جاري استخراج النص من PDF...")
+            elif (mime_type == "application/pdf") or ext == pdf_ext:
+                print("📄 Extracting text from PDF...")
                 extracted_text = generator.extract_text_from_pdf(str(file_path))
-                
                 if extracted_text.startswith("خطأ"):
-                    return Response({'error': extracted_text},status=400)
-                    
-                print(f"تم استخراج النص بنجاح ({len(extracted_text)} حرف)")
+                    return Response({'error': extracted_text}, status=400)
+                print(f"✅ Text extracted successfully ({len(extracted_text)} chars)")
                 final_text = extracted_text
-
 
             else:
                 return Response({"detail": "Unsupported file type"}, status=400)
 
-        # معالجة النص
         if text:
-            final_text=text
-            
+            final_text = text
+
         if final_text:
             try:
                 # 1. Run the MCQ generation pipeline
                 result = run_mcq_pipeline(final_text)
 
                 # 2. Save the request and its result to the database
-                # request.user is available because of JWTAuthentication and IsAuthenticated
                 mcq_request = MCQRequest.objects.create(
                     user=request.user,
                     input_text=final_text,
-                    generated_mcqs=result # Stores the JSON response from the pipeline
+                    generated_mcqs=result
                 )
 
                 # 3. Return the generated MCQs to the user
-                
                 return Response(result, status=status.HTTP_200_OK)
 
-            except Exception as e:
-                # Log the full traceback for debugging purposes
-                logger.exception("Error occurred while generating MCQs")  # This logs full traceback
+            except Exception:
+                logger.exception("Error occurred while generating MCQs")
                 return Response({"error": "An internal server error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
             
 class Extract(APIView):
     authentication_classes = [JWTAuthentication]
